@@ -1,0 +1,7 @@
+# Input lớn (>100MB, vượt giới hạn GitHub) — lưu ngoài git
+*.rar
+*.bak
+/1. Hồ sơ PCCC.pdf
+
+# Dữ liệu giải nén / trung gian
+data/raw/
