@@ -5,3 +5,7 @@
 
 # Dữ liệu giải nén / trung gian
 data/raw/
+/1. HS PCCC_YOBG_20260907/
+
+# File khóa tạm của Excel/Word khi đang mở
+~$*
