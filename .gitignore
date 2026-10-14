@@ -9,3 +9,10 @@ data/raw/
 
 # File khóa tạm của Excel/Word khi đang mở
 ~$*
+
+# Ứng dụng desktop: môi trường, bản build
+.venv/
+__pycache__/
+*.pyc
+/dist/
+/app/build/
