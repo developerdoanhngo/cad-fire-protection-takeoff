@@ -29,8 +29,24 @@ def make_icon() -> Path:
     return ico
 
 
+def sync_ui_version():
+    """Ghi số phiên bản (__version__) vào giao diện: nhãn, hằng UI_VERSION, ?v= của css/js."""
+    import re
+    ver = re.search(r'__version__ = "([^"]+)"', (APP / "pccc_takeoff" / "__init__.py").read_text(encoding="utf-8")).group(1)
+    ui = APP / "pccc_takeoff" / "ui"
+    html = (ui / "index.html").read_text(encoding="utf-8")
+    html = re.sub(r"\?v=[0-9.]+", f"?v={ver}", html)
+    html = re.sub(r"Phiên bản [0-9.]+", f"Phiên bản {ver}", html)
+    (ui / "index.html").write_text(html, encoding="utf-8")
+    js = (ui / "js" / "app.js").read_text(encoding="utf-8")
+    js = re.sub(r'const UI_VERSION = "[^"]+"', f'const UI_VERSION = "{ver}"', js)
+    (ui / "js" / "app.js").write_text(js, encoding="utf-8")
+    return ver
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
+    print("Phiên bản:", sync_ui_version())
     # --dist <thư mục>: đóng gói ra chỗ khác (dùng khi bản cũ đang mở, Windows khoá file)
     dist = Path(sys.argv[sys.argv.index("--dist") + 1]) if "--dist" in sys.argv else ROOT / "dist"
     ico = make_icon()

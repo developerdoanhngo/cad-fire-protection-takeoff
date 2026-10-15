@@ -1,5 +1,6 @@
 /* DCS PCCC Takeoff – giao diện */
 "use strict";
+const UI_VERSION = "1.0.2"; // build.py tự đồng bộ với __version__
 
 /* ------------------------------------------------------------------ icons */
 const IC = {
@@ -846,6 +847,7 @@ async function boot() {
   if (!API) { $("#view").innerHTML = '<div class="empty"><b>Không kết nối được phần xử lý.</b></div>'; return; }
   S.info = await call("app_info");
   $("#ver").textContent = "Phiên bản " + S.info.version;
+  if (S.info.version !== UI_VERSION) toast(`Giao diện (${UI_VERSION}) chưa khớp phần xử lý (${S.info.version}). Hãy tắt hẳn phần mềm rồi mở lại.`, true);
   $("#site").onclick = () => API.open_website();
   $("#catalog").innerHTML = S.info.catalog.map((c) => `<option value="${esc(c.name)}">`).join("");
   render();

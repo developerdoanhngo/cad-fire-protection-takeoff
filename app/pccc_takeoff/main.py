@@ -25,9 +25,10 @@ def main():
     debug = "--debug" in sys.argv
     if "--selftest" in sys.argv:
         out = sys.argv[sys.argv.index("--selftest") + 1]
-        webview.start(_selftest, (window, out), gui="edgechromium", private_mode=False)
+        webview.start(_selftest, (window, out), gui="edgechromium", private_mode=True)
         return
-    webview.start(gui="edgechromium", debug=debug, private_mode=False)
+    # private_mode=True: mỗi lần mở dùng hồ sơ WebView2 mới -> không bao giờ nạp giao diện cũ từ cache
+    webview.start(gui="edgechromium", debug=debug, private_mode=True)
 
 
 def _selftest(window, out):
@@ -43,6 +44,7 @@ def _selftest(window, out):
         time.sleep(1.0)
         res = {"ok": bool(window.evaluate_js("!!S.info")),
                "version": window.evaluate_js("S.info && S.info.version"),
+               "ui_version": window.evaluate_js("typeof UI_VERSION !== 'undefined' ? UI_VERSION : null"),
                "catalog": window.evaluate_js("S.info ? S.info.catalog.length : 0"),
                "projects": window.evaluate_js("S.projects ? S.projects.length : -1"),
                "errors": window.evaluate_js("window.__errs")}
