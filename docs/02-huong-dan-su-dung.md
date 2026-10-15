@@ -1,9 +1,9 @@
-# Hướng dẫn sử dụng DCS PCCC Takeoff (phiên bản 1.0.2)
+# Hướng dẫn sử dụng DCS PCCC Takeoff (phiên bản 1.0.3)
 
 Phần mềm desktop đọc bộ bản vẽ CAD (DWG) của hệ thống phòng cháy chữa cháy, tự đếm thiết bị, đo chiều dài ống và dây, rồi xuất bảng khối lượng ra Excel.
 
 ## 1. Cài đặt và mở phần mềm
-- Chép thư mục `DCS PCCC Takeoff` (hoặc giải nén file `DCS-PCCC-Takeoff-1.0.2-win64.zip`) vào máy.
+- Chép thư mục `DCS PCCC Takeoff` (hoặc giải nén file `DCS-PCCC-Takeoff-1.0.3-win64.zip`) vào máy.
 - Chạy file **`DCS PCCC Takeoff.exe`**.
 - Yêu cầu máy: Windows 10/11 có Microsoft Edge WebView2. Các máy Windows 10/11 được cập nhật đều có sẵn thành phần này.
 - Không cần cài AutoCAD. Bản vẽ được xử lý ngay trên máy, không gửi đi đâu.

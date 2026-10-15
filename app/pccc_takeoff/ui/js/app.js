@@ -1,6 +1,6 @@
 /* DCS PCCC Takeoff – giao diện */
 "use strict";
-const UI_VERSION = "1.0.2"; // build.py tự đồng bộ với __version__
+const UI_VERSION = "1.0.3"; // build.py tự đồng bộ với __version__
 
 /* ------------------------------------------------------------------ icons */
 const IC = {
@@ -95,9 +95,11 @@ function renderNav() {
 }
 
 /* Thanh điều hướng của dự án: "← Dự án › Tên dự án" */
-function crumbs(name) {
+function crumbs(name, meta = "") {
   return `<button class="btn ghost icon-btn" id="tBack" title="Về danh sách dự án">${ico("left")}</button>
-    <div class="bc"><a id="tAll">Dự án</a><span>›</span><h1>${esc(name)}</h1></div>`;
+    <div class="pj-ic">${ico("layers")}</div>
+    <div class="bc"><div class="bc-path"><a id="tAll">Dự án</a><span>›</span></div>
+      <div class="bc-title"><h1>${esc(name)}</h1>${meta ? `<span class="pj-meta">${meta}</span>` : ""}</div></div>`;
 }
 function bindCrumbs() {
   const go = () => { S.view = "home"; render(); };
@@ -106,7 +108,10 @@ function bindCrumbs() {
   if (a) a.onclick = go;
 }
 
-function setTop(html) { $("#topbar").innerHTML = html; }
+function setTop(html) {
+  $("#topbar").innerHTML = html;
+  document.body.classList.toggle("in-project", S.view === "ws" || S.view === "processing");
+}
 
 async function render() {
   stopPolling();
@@ -285,7 +290,7 @@ async function openDrawingDialog({ kind = "new", pick = null } = {}) {
 const STAGES = [["convert", "Chuyển đổi DWG sang DXF"], ["read", "Đọc bản vẽ"], ["pages", "Chia trang theo khung tên"], ["symbols", "Nhận diện ký hiệu"], ["done", "Hoàn tất"]];
 function stopPolling() { if (S.polling) { clearInterval(S.polling); S.polling = null; } }
 function renderProcessing() {
-  setTop(`${crumbs(S.prj?.name || "Dự án")}<span class="crumb">· Đang xử lý bản vẽ</span>`);
+  setTop(`${crumbs(S.prj?.name || "Dự án", "Đang xử lý bản vẽ")}`);
   bindCrumbs();
   const v = $("#view");
   v.innerHTML = `<div class="card proc">
@@ -354,7 +359,7 @@ async function openProject(pid) {
 
 function renderEmptyProject() {
   const p = S.prj;
-  setTop(`${crumbs(p.name)}<span class="crumb">Chưa có bản vẽ</span><div class="grow"></div>
+  setTop(`${crumbs(p.name, "Chưa có bản vẽ")}<div class="grow"></div>
     <button class="btn" id="tRen">${ico("edit")} Đổi tên</button>`);
   bindCrumbs();
   $("#tRen").onclick = async () => { const n = prompt("Tên dự án", p.name); if (n && n.trim()) { p.name = await call("rename_project", S.pid, n.trim()); renderEmptyProject(); } };
@@ -374,8 +379,7 @@ function renderWorkspace() {
   const p = S.prj;
   if (!p.files || !p.files.some((f) => f.role === "main")) return renderEmptyProject();
   const unk = p.symbols.filter((s) => s.count > 0 && !s.map).length;
-  setTop(`${crumbs(p.name)}
-    <span class="crumb">${p.files.filter((f) => f.role === "main").length} bản vẽ · ${p.pages.length} trang${p.process_seconds ? ` · xử lý ${fmt(p.process_seconds)} giây` : ""}</span>
+  setTop(`${crumbs(p.name, `${p.files.filter((f) => f.role === "main").length} bản vẽ · ${p.pages.length} trang${p.process_seconds ? ` · xử lý ${fmt(p.process_seconds)} giây` : ""}`)}
     <div class="grow"></div>
     <button class="btn" id="tRen">${ico("edit")} Đổi tên</button>
     <button class="btn" id="tDraw">${ico("folder")} Cập nhật bản vẽ</button>
@@ -394,7 +398,7 @@ function renderWorkspace() {
     ["symbols", "2", "Ký hiệu & vật tư", unk ? `${unk} ký hiệu chưa xác định` : "Đã xác định đủ"],
     ["results", "3", "Kết quả", "Bảng khối lượng"],
   ];
-  v.innerHTML = `<div class="ws-head"><span class="ws-label">${ico("layers")}Các bước của dự án</span><div class="tabs">${tabs.map(([k, n, l, s]) => `<div class="tab ${S.tab === k ? "on" : ""}" data-t="${k}"><div class="tn">${n}</div><div>${l}<small>${s}</small></div></div>`).join("")}</div></div><div class="ws-body" id="wsBody"></div>`;
+  v.innerHTML = `<div class="ws-head"><span class="ws-label">Các bước</span><div class="tabs">${tabs.map(([k, n, l, s]) => `<div class="tab ${S.tab === k ? "on" : ""}" data-t="${k}"><div class="tn">${n}</div><div>${l}<small>${s}</small></div></div>`).join('<span class="step-sep"></span>')}</div></div><div class="ws-body" id="wsBody"></div>`;
   $$(".tab", v).forEach((t) => (t.onclick = () => { S.tab = t.dataset.t; renderWorkspace(); }));
   if (S.tab === "pages") renderPagesTab();
   else if (S.tab === "symbols") renderSymbolsTab();

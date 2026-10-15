@@ -308,3 +308,39 @@ table.res td.c{text-align:center}
 .ws-head .ws-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-right:14px;margin-right:4px;border-right:1px solid var(--line);white-space:nowrap}
 .ws-head .ws-label svg{width:15px;height:15px;color:var(--brand)}
 .empty .btn svg{width:18px;height:18px;margin:0;color:inherit}
+
+/* ===== Đầu trang dự án tách bạch với phần nội dung ===== */
+.topbar{background:#fff;backdrop-filter:none}
+body.in-project .topbar{height:76px;border-bottom:1px solid var(--line-2)}
+.pj-ic{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--grad);color:#fff;box-shadow:0 6px 14px -6px rgba(5,95,209,.55)}
+.pj-ic svg{width:21px;height:21px}
+.bc{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bc-path{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.bc-path a{color:var(--muted);cursor:pointer}
+.bc-path a:hover{color:var(--brand)}
+.bc-path span{color:var(--muted-2)}
+.bc-title{display:flex;align-items:center;gap:12px;min-width:0}
+.bc-title h1{font-size:20px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-meta{font-size:12px;color:var(--muted);background:#F1F5F9;border-radius:20px;padding:3px 10px;white-space:nowrap}
+
+/* thanh các bước */
+.ws-head{position:relative;z-index:3;padding:0 28px;gap:18px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 8px 18px -12px rgba(15,23,42,.28)}
+.ws-head .ws-label{border-right:0;padding-right:0;margin-right:0;font-size:11px;color:var(--muted-2)}
+.tabs{gap:0;align-items:stretch}
+.tab{height:58px;border-radius:0;border:0;border-bottom:3px solid transparent;padding:0 6px;background:transparent;margin-bottom:-1px}
+.tab:hover{background:transparent;color:var(--ink)}
+.tab:hover .tn{background:#E2E8F0}
+.tab.on{background:transparent;border-color:transparent;border-bottom-color:var(--brand);color:var(--ink)}
+.tab.on>div:last-child{font-weight:600}
+.tab:not(:last-child):after{content:"";display:block;width:44px;height:2px;border-radius:2px;background:#E2E8F0;margin:0 14px 0 12px;align-self:center}
+
+/* phần nội dung: nền xám, các khối là thẻ nổi */
+.ws-body{background:var(--bg);padding:16px 16px 16px 20px;gap:16px}
+.pane-list{border:1px solid rgba(226,232,240,.8);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.pane-view{padding:0}
+.ws-body .symwrap{padding:4px 8px 24px}
+.pgrp{background:#fff}
+.bc{align-items:flex-start}
+.tab:not(:last-child):after{content:none}
+.tab{padding:0 4px}
+.step-sep{width:44px;height:2px;border-radius:2px;background:#E2E8F0;align-self:center;margin:0 16px;flex:none}
