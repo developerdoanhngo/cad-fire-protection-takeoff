@@ -95,15 +95,28 @@ def scan_inputs(paths: list) -> list:
 
 
 def create(name: str, inputs: list) -> dict:
-    files = scan_inputs(inputs)
-    if not any(f["role"] == "main" for f in files):
+    """Tạo dự án. `inputs` rỗng = dự án trống, thêm bản vẽ sau bằng set_drawings()."""
+    files = scan_inputs(inputs) if inputs else []
+    if inputs and not any(f["role"] == "main" for f in files):
         raise ValueError("Không tìm thấy file bản vẽ .dwg/.dxf nào trong lựa chọn.")
     pid = datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     project = {
         "id": pid, "name": name.strip() or "Dự án mới", "created": _now(), "updated": _now(),
-        "status": "new", "error": None, "inputs": inputs, "files": files, "pages": [],
-        "symbols": {}, "layers": {}, "settings": dict(DEFAULT_SETTINGS),
+        "status": "new" if files else "empty", "error": None, "inputs": inputs or [], "files": files,
+        "pages": [], "symbols": {}, "layers": {}, "settings": dict(DEFAULT_SETTINGS),
     }
+    save(project)
+    return project
+
+
+def set_drawings(pid: str, inputs: list) -> dict:
+    """Gắn (hoặc thay) bộ bản vẽ của dự án. Ký hiệu đã xác nhận vẫn giữ nhờ thư viện."""
+    files = scan_inputs(inputs)
+    if not any(f["role"] == "main" for f in files):
+        raise ValueError("Không tìm thấy file bản vẽ .dwg/.dxf nào trong lựa chọn.")
+    project = load(pid)
+    project.update({"inputs": inputs, "files": files, "pages": [], "symbols": {}, "layers": {},
+                    "status": "new", "error": None})
     save(project)
     return project
 
@@ -131,6 +144,8 @@ def _apply_mapping(project):
 def process(pid: str, progress):
     """Chạy toàn bộ: chuyển file -> đọc -> chia trang -> gợi ý ký hiệu. `progress(stage, pct, msg)`."""
     project = load(pid)
+    if not any(f["role"] == "main" for f in project["files"]):
+        raise ValueError("Dự án chưa có bản vẽ. Hãy thêm bản vẽ trước.")
     project["status"] = "processing"
     save(project)
     d = project_dir(pid)

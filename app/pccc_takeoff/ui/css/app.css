@@ -298,3 +298,13 @@ table.res td.c{text-align:center}
 .about .logo-big{height:56px}
 .lic{font-size:13px;color:var(--muted);line-height:1.7}
 .lic b{color:var(--ink)}
+
+/* menu trái: nút tạo dự án + điều hướng dự án */
+.nav-new{width:100%;height:42px;margin:4px 0 6px;justify-content:center;font-weight:600}
+.bc{display:flex;align-items:center;gap:10px;min-width:0}
+.bc a{color:var(--muted);cursor:pointer;font-weight:500;white-space:nowrap}
+.bc a:hover{color:var(--brand)}
+.bc span{color:var(--muted-2)}
+.ws-head .ws-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-right:14px;margin-right:4px;border-right:1px solid var(--line);white-space:nowrap}
+.ws-head .ws-label svg{width:15px;height:15px;color:var(--brand)}
+.empty .btn svg{width:18px;height:18px;margin:0;color:inherit}

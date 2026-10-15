@@ -73,11 +73,23 @@ class Api:
 
     def create_project(self, name, paths):
         try:
-            prj = P.create(name, paths)
+            prj = P.create(name, paths or [])
         except Exception as ex:
             return {"error": str(ex)}
-        self.start_processing(prj["id"])
-        return {"id": prj["id"]}
+        if prj["files"]:
+            self.start_processing(prj["id"])
+        return {"id": prj["id"], "processing": bool(prj["files"])}
+
+    def set_drawings(self, pid, paths):
+        """Thêm / thay bộ bản vẽ cho dự án rồi xử lý lại."""
+        try:
+            prj = P.set_drawings(pid, paths or [])
+        except Exception as ex:
+            return {"error": str(ex)}
+        with self._lock:
+            self._cache[pid] = prj
+        self.start_processing(pid)
+        return {"id": pid, "processing": True}
 
     def start_processing(self, pid):
         job = {"stage": "start", "pct": 0.0, "msg": "Chuẩn bị…", "done": False, "error": None,

@@ -31,12 +31,14 @@ def make_icon() -> Path:
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
+    # --dist <thư mục>: đóng gói ra chỗ khác (dùng khi bản cũ đang mở, Windows khoá file)
+    dist = Path(sys.argv[sys.argv.index("--dist") + 1]) if "--dist" in sys.argv else ROOT / "dist"
     ico = make_icon()
     sep = ";"
     args = [
         sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--windowed",
         "--name", NAME, "--icon", str(ico),
-        "--distpath", str(ROOT / "dist"), "--workpath", str(APP / "build" / "work"), "--specpath", str(APP / "build"),
+        "--distpath", str(dist), "--workpath", str(APP / "build" / "work"), "--specpath", str(APP / "build"),
         "--add-data", f"{APP / 'pccc_takeoff' / 'ui'}{sep}ui",
         "--add-data", f"{APP / 'vendor' / 'libredwg'}{sep}vendor/libredwg",
         "--collect-submodules", "ezdxf",
@@ -49,7 +51,7 @@ def main():
     ]
     env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     subprocess.check_call(args, env=env)
-    out = ROOT / "dist" / NAME
+    out = dist / NAME
     shutil.copy(APP / "vendor" / "libredwg" / "COPYING", out / "LICENSE-LibreDWG-GPLv3.txt")
     (out / "README.txt").write_text(
         "DCS PCCC Takeoff – DC Software (dcsoftware.vn)\r\n\r\n"

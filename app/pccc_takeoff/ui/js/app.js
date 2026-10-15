@@ -35,6 +35,7 @@ const IC = {
   excel: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 12 4 5M13 12l-4 5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+  left: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
 };
 const ico = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ""}</svg>`;
 
@@ -78,30 +79,30 @@ const S = {
 
 /* ------------------------------------------------------------------ shell */
 function renderNav() {
-  const inPrj = !!S.pid && S.prj && S.prj.status === "ready";
+  // Menu trái chỉ chứa phần CHUNG của phần mềm. Các bước của dự án nằm trong màn hình dự án.
+  const cur = S.view === "ws" || S.view === "processing" ? "home" : S.view;
   const items = [
-    { sec: "Làm việc" },
-    { id: "home", ic: "home", label: "Trang chủ" },
-    { id: "new", ic: "plus", label: "Dự án mới" },
+    { id: "home", ic: "layers", label: "Dự án", count: S.projects.length || "" },
+    { id: "library", ic: "book", label: "Thư viện ký hiệu" },
+    { id: "about", ic: "info", label: "Giới thiệu" },
   ];
-  if (S.pid && S.prj) {
-    items.push({ sec: "Dự án đang mở" });
-    items.push({ id: "ws:pages", ic: "pages", label: "Trang bản vẽ", dis: !inPrj, count: inPrj ? S.prj.pages.filter((p) => p.include).length : "" });
-    items.push({ id: "ws:symbols", ic: "shapes", label: "Ký hiệu & vật tư", dis: !inPrj, count: inPrj ? S.prj.symbols.filter((s) => s.count > 0 && !s.map).length || "" : "" });
-    items.push({ id: "ws:results", ic: "table", label: "Kết quả & xuất Excel", dis: !inPrj });
-  }
-  items.push({ sec: "Hệ thống" });
-  items.push({ id: "library", ic: "book", label: "Thư viện ký hiệu" });
-  items.push({ id: "about", ic: "info", label: "Giới thiệu" });
-  const cur = S.view === "ws" ? "ws:" + S.tab : S.view;
-  $("#nav").innerHTML = items.map((it) => it.sec ? `<div class="sec">${it.sec}</div>` :
-    `<a data-id="${it.id}" class="${cur === it.id ? "active" : ""} ${it.dis ? "disabled" : ""}">${ico(it.ic)}<span>${it.label}</span>${it.count ? `<span class="count">${it.count}</span>` : ""}</a>`).join("");
-  $$("#nav a").forEach((a) => (a.onclick = () => {
-    const id = a.dataset.id;
-    if (id === "new") return openNewProject();
-    if (id.startsWith("ws:")) { S.view = "ws"; S.tab = id.slice(3); return render(); }
-    S.view = id; render();
-  }));
+  $("#nav").innerHTML = `<button class="btn primary nav-new" id="navNew">${ico("plus")} Tạo dự án mới</button>
+    <div class="sec">Menu</div>` +
+    items.map((it) => `<a data-id="${it.id}" class="${cur === it.id ? "active" : ""}">${ico(it.ic)}<span>${it.label}</span>${it.count ? `<span class="count">${it.count}</span>` : ""}</a>`).join("");
+  $("#navNew").onclick = () => openNewProject();
+  $$("#nav a").forEach((a) => (a.onclick = () => { S.view = a.dataset.id; render(); }));
+}
+
+/* Thanh điều hướng của dự án: "← Dự án › Tên dự án" */
+function crumbs(name) {
+  return `<button class="btn ghost icon-btn" id="tBack" title="Về danh sách dự án">${ico("left")}</button>
+    <div class="bc"><a id="tAll">Dự án</a><span>›</span><h1>${esc(name)}</h1></div>`;
+}
+function bindCrumbs() {
+  const go = () => { S.view = "home"; render(); };
+  const b = $("#tBack"), a = $("#tAll");
+  if (b) b.onclick = go;
+  if (a) a.onclick = go;
 }
 
 function setTop(html) { $("#topbar").innerHTML = html; }
@@ -120,9 +121,10 @@ async function render() {
 
 /* ------------------------------------------------------------------ home */
 async function renderHome() {
-  setTop(`<h1>Trang chủ</h1><div class="grow"></div><button class="btn primary" id="tNew">${ico("plus")} Tạo dự án mới</button>`);
+  setTop(`<h1>Dự án</h1><span class="crumb">· Danh sách dự án bóc tách</span><div class="grow"></div><button class="btn primary" id="tNew">${ico("plus")} Tạo dự án mới</button>`);
   $("#tNew").onclick = openNewProject;
   S.projects = await call("list_projects");
+  renderNav();
   const v = $("#view");
   const feats = [
     ["bolt", "#EDF3FF", "#055FD1", "Đọc thẳng file DWG", "Tự chuyển đổi, không cần mở AutoCAD hay xuất DXF thủ công."],
@@ -147,7 +149,7 @@ async function renderHome() {
       <div class="step3"><div class="n">3</div><div><b>Xuất bảng khối lượng</b><span>File Excel theo hệ, theo tòa nhà, theo tầng</span></div></div>
     </div>
   </div>
-  <div class="section-h"><h3>Dự án gần đây</h3><span class="muted">${S.projects.length} dự án</span></div>
+  <div class="section-h"><h3>Tất cả dự án</h3><span class="muted">${S.projects.length} dự án</span></div>
   <div id="plist"></div>
   <div class="section-h"><h3>Phần mềm làm được gì</h3></div>
   <div class="features">${feats.map(([i, bg, fg, b, s]) => `<div class="card feat"><div class="fi" style="background:${bg};color:${fg}">${ico(i)}</div><b>${b}</b><span>${s}</span></div>`).join("")}</div>`;
@@ -164,8 +166,8 @@ async function renderHome() {
       <button class="btn ghost icon-btn del" data-del="${p.id}" title="Xoá dự án">${ico("trash")}</button>
       <div class="row"><div class="ic">${ico("layers")}</div>
         <div style="min-width:0"><h4>${esc(p.name)}</h4><div class="meta">${ico("clock", "").replace("<svg", '<svg style="width:12px;height:12px;vertical-align:-2px"')} ${fdate(p.updated)}</div></div></div>
-      <div class="row" style="flex-wrap:wrap;gap:6px">${(p.systems || []).map(sysChip).join("")}
-        ${p.status === "ready" ? "" : p.status === "error" ? '<span class="chip bad">Lỗi xử lý</span>' : '<span class="chip warn">Chưa xử lý xong</span>'}</div>
+      <div class="row" style="flex-wrap:wrap;gap:6px">${p.id === S.pid ? '<span class="chip ok"><span class="dot"></span>Đang mở</span>' : ""}${(p.systems || []).map(sysChip).join("")}
+        ${p.status === "ready" ? "" : p.status === "empty" ? '<span class="chip info">Chưa có bản vẽ</span>' : p.status === "error" ? '<span class="chip bad">Lỗi xử lý</span>' : '<span class="chip warn">Chưa xử lý xong</span>'}</div>
       <div class="stats"><div><b>${p.files}</b>file bản vẽ</div><div><b>${p.pages_used}<span class="muted" style="font-size:13px;font-weight:500">/${p.pages}</span></b>trang được tính</div><div><b>${p.symbols}</b>loại ký hiệu</div></div>
     </div>`).join("");
   $$(".proj", pl).forEach((c) => (c.onclick = (e) => {
@@ -184,69 +186,106 @@ async function renderHome() {
   }));
 }
 
-/* ------------------------------------------------------------------ new project */
-async function openNewProject(mode) {
-  let files = [], paths = [], name = "";
+/* ------------------------------------------------------------------ new project / drawings */
+function openNewProject(mode) { openDrawingDialog({ kind: "new", pick: mode }); }
+
+/* kind: "new" = tạo dự án mới; "replace" = thêm / thay bản vẽ cho dự án đang mở */
+async function openDrawingDialog({ kind = "new", pick = null } = {}) {
+  let files = [], paths = [];
+  const isNew = kind === "new";
+  const hasOld = !isNew && S.prj && S.prj.files && S.prj.files.some((f) => f.role === "main");
   const bg = document.createElement("div");
   bg.className = "modal-bg";
   bg.innerHTML = `<div class="modal">
-    <div class="mh">${ico("plus").replace("<svg", '<svg style="width:20px;height:20px;color:var(--brand)"')}<h3>Tạo dự án mới</h3><div class="grow"></div><button class="btn ghost icon-btn" id="mClose">${ico("x")}</button></div>
+    <div class="mh">${ico(isNew ? "plus" : "folder").replace("<svg", '<svg style="width:20px;height:20px;color:var(--brand)"')}<h3>${isNew ? "Tạo dự án mới" : hasOld ? "Cập nhật bản vẽ" : "Thêm bản vẽ cho dự án"}</h3><div class="grow"></div><button class="btn ghost icon-btn" id="mClose">${ico("x")}</button></div>
     <div class="mb">
+      ${isNew ? `<label class="field" style="margin-bottom:16px">Tên dự án<input class="input" id="mName" placeholder="Ví dụ: Nhà máy Youngone Bắc Giang"></label>` : ""}
+      ${hasOld ? `<div class="infoline">${ico("info")}<div>Phần mềm sẽ <b>xử lý lại toàn bộ</b> với bộ bản vẽ mới. Ký hiệu bạn đã xác nhận vẫn được giữ (lấy từ thư viện); việc chọn trang và hệ số tầng sẽ được tính lại.</div></div>` : ""}
       <div class="drop" id="mDrop">
         ${ico("folder", "big")}
         <div><b style="color:var(--ink);font-size:15px">Chọn bộ bản vẽ CAD</b><div class="muted" style="margin-top:4px">Nên chọn cả thư mục để phần mềm lấy luôn thư mục <b>Xref</b> (khung tên, bản vẽ nền)</div></div>
         <div class="row"><button class="btn primary" id="mFolder">${ico("folder")} Chọn thư mục</button><button class="btn" id="mFiles">${ico("file")} Chọn file .dwg</button></div>
       </div>
       <div id="mFiles2"></div>
-      <label class="field" style="margin-top:16px">Tên dự án<input class="input" id="mName" placeholder="Ví dụ: Nhà máy Youngone Bắc Giang"></label>
     </div>
-    <div class="mf"><span class="muted grow" id="mSum" style="align-self:center;font-size:13px"></span><button class="btn" id="mCancel">Huỷ</button><button class="btn primary" id="mGo" disabled>${ico("bolt")} Bắt đầu xử lý</button></div>
+    <div class="mf"><span class="muted grow" id="mSum" style="align-self:center;font-size:13px"></span><button class="btn" id="mCancel">Huỷ</button><button class="btn primary" id="mGo" disabled></button></div>
   </div>`;
   document.body.appendChild(bg);
   const close = () => bg.remove();
   $("#mClose", bg).onclick = close;
   $("#mCancel", bg).onclick = close;
+  const mains = () => files.filter((f) => f.role === "main");
+  const update = () => {
+    const m = mains().length, x = files.filter((f) => f.role === "xref").length;
+    const name = isNew ? $("#mName", bg).value.trim() : "";
+    const go = $("#mGo", bg), sum = $("#mSum", bg);
+    if (m) {
+      go.innerHTML = `${ico("bolt")} ${isNew || !hasOld ? "Bắt đầu xử lý" : "Xử lý lại với bản vẽ mới"}`;
+      go.disabled = isNew && !name;
+      const tot = files.reduce((acc, f) => acc + f.size, 0);
+      sum.textContent = `${m} bản vẽ chính, ${x} bản vẽ nền · ${fmt(tot / 1048576, 1)} MB` + (x ? "" : " · ⚠ không thấy thư mục Xref");
+      if (isNew && !name) sum.textContent = "Nhập tên dự án để bắt đầu";
+    } else if (isNew) {
+      go.innerHTML = `${ico("plus")} Tạo dự án, thêm bản vẽ sau`;
+      go.disabled = !name;
+      sum.textContent = name ? "Chưa chọn bản vẽ – có thể tạo dự án trước, thêm bản vẽ sau" : "Nhập tên dự án, rồi chọn bộ bản vẽ (có thể chọn sau)";
+    } else {
+      go.innerHTML = `${ico("bolt")} Bắt đầu xử lý`;
+      go.disabled = true;
+      sum.textContent = "Hãy chọn thư mục hoặc file bản vẽ";
+    }
+  };
   const showFiles = () => {
-    const mains = files.filter((f) => f.role === "main"), xrefs = files.filter((f) => f.role === "xref");
+    const xrefs = files.filter((f) => f.role === "xref");
     const row = (f) => `<div class="fr">${ico("file").replace("<svg", '<svg style="width:16px;height:16px;color:var(--muted)"')}<span class="nm">${esc(f.name)}</span>${f.role === "main" ? sysChip(f.system) : '<span class="chip ghost">Xref</span>'}<span class="muted mono">${fmt(f.size / 1048576, 1)} MB</span></div>`;
     $("#mFiles2", bg).innerHTML = files.length ? `<div class="filelist">
-      <div class="grp">Bản vẽ chính · ${mains.length}</div>${mains.map(row).join("")}
+      <div class="grp">Bản vẽ chính · ${mains().length}</div>${mains().map(row).join("")}
       ${xrefs.length ? `<div class="grp">Bản vẽ nền (Xref) · ${xrefs.length}</div>${xrefs.map(row).join("")}` : ""}</div>` : "";
-    const tot = files.reduce((a, f) => a + f.size, 0);
-    $("#mSum", bg).textContent = files.length ? `${mains.length} bản vẽ chính, ${xrefs.length} bản vẽ nền · ${fmt(tot / 1048576, 1)} MB` : "";
-    $("#mGo", bg).disabled = !mains.length;
-    if (!xrefs.length && mains.length) $("#mSum", bg).textContent += " · ⚠ không thấy thư mục Xref";
+    update();
   };
-  const pick = async (kind) => {
-    const r = kind === "folder" ? await call("pick_folder") : await call("pick_files");
-    paths = kind === "folder" ? (r ? [r] : []) : (r || []);
-    if (!paths.length) return;
-    const sc = await call("scan", paths);
+  const doPick = async (how) => {
+    const r = how === "folder" ? await call("pick_folder") : await call("pick_files");
+    const sel = how === "folder" ? (r ? [r] : []) : (r || []);
+    if (!sel.length) return;
+    const sc = await call("scan", sel);
     if (sc.error) return toast(sc.error, true);
-    files = sc.files;
-    if (!files.some((f) => f.role === "main")) toast("Không tìm thấy file .dwg/.dxf trong lựa chọn này", true);
-    if (!$("#mName", bg).value) $("#mName", bg).value = sc.suggested_name || "";
+    if (!sc.files.some((f) => f.role === "main")) return toast("Không tìm thấy file .dwg/.dxf trong lựa chọn này", true);
+    paths = sel; files = sc.files;
+    if (isNew && !$("#mName", bg).value) $("#mName", bg).value = sc.suggested_name || "";
     showFiles();
   };
-  $("#mFolder", bg).onclick = () => pick("folder");
-  $("#mFiles", bg).onclick = () => pick("files");
+  $("#mFolder", bg).onclick = () => doPick("folder");
+  $("#mFiles", bg).onclick = () => doPick("files");
+  if (isNew) $("#mName", bg).oninput = update;
   $("#mGo", bg).onclick = async () => {
-    name = $("#mName", bg).value.trim() || "Dự án mới";
     $("#mGo", bg).disabled = true;
-    const r = await call("create_project", name, paths);
-    if (r.error) { $("#mGo", bg).disabled = false; return toast(r.error, true); }
-    close();
-    S.pid = r.id; S.prj = { name, status: "processing" }; S.view = "processing";
-    render();
+    if (isNew) {
+      const name = $("#mName", bg).value.trim() || "Dự án mới";
+      const r = await call("create_project", name, paths);
+      if (r.error) { update(); return toast(r.error, true); }
+      close();
+      if (r.processing) { S.pid = r.id; S.prj = { name, status: "processing" }; S.view = "processing"; return render(); }
+      await loadProject(r.id);
+      S.view = "ws"; S.tab = "pages"; render();
+      toast(`Đã tạo dự án “${esc(name)}”`);
+    } else {
+      const r = await call("set_drawings", S.pid, paths);
+      if (r.error) { update(); return toast(r.error, true); }
+      close();
+      S.prj = { ...S.prj, status: "processing" }; S.view = "processing"; render();
+    }
   };
-  if (mode) pick(mode);
+  update();
+  if (isNew) setTimeout(() => $("#mName", bg).focus(), 50);
+  if (pick) doPick(pick);
 }
 
 /* ------------------------------------------------------------------ processing */
 const STAGES = [["convert", "Chuyển đổi DWG sang DXF"], ["read", "Đọc bản vẽ"], ["pages", "Chia trang theo khung tên"], ["symbols", "Nhận diện ký hiệu"], ["done", "Hoàn tất"]];
 function stopPolling() { if (S.polling) { clearInterval(S.polling); S.polling = null; } }
 function renderProcessing() {
-  setTop(`<h1>${esc(S.prj?.name || "Dự án")}</h1><span class="crumb">· Đang xử lý bản vẽ</span>`);
+  setTop(`${crumbs(S.prj?.name || "Dự án")}<span class="crumb">· Đang xử lý bản vẽ</span>`);
+  bindCrumbs();
   const v = $("#view");
   v.innerHTML = `<div class="card proc">
       <div class="row"><div style="width:52px;height:52px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#fff">${ico("loader", "spin").replace("<svg", '<svg style="width:26px;height:26px"')}</div>
@@ -299,6 +338,7 @@ async function openProject(pid) {
   const pr = await API.progress(pid);
   if (pr && pr.stage !== "idle" && !pr.done) { S.pid = pid; S.prj = { name: "", status: "processing" }; S.view = "processing"; return render(); }
   await loadProject(pid);
+  if (S.prj.status === "empty") { S.view = "ws"; S.tab = "pages"; return render(); }
   if (S.prj.status !== "ready") {
     if (confirm(S.prj.status === "error" ? `Dự án bị lỗi ở lần xử lý trước:\n${S.prj.error}\n\nXử lý lại?` : "Dự án chưa xử lý xong. Xử lý lại?")) {
       await call("start_processing", pid);
@@ -311,15 +351,37 @@ async function openProject(pid) {
   render();
 }
 
+function renderEmptyProject() {
+  const p = S.prj;
+  setTop(`${crumbs(p.name)}<span class="crumb">Chưa có bản vẽ</span><div class="grow"></div>
+    <button class="btn" id="tRen">${ico("edit")} Đổi tên</button>`);
+  bindCrumbs();
+  $("#tRen").onclick = async () => { const n = prompt("Tên dự án", p.name); if (n && n.trim()) { p.name = await call("rename_project", S.pid, n.trim()); renderEmptyProject(); } };
+  const v = $("#view");
+  v.className = "view";
+  v.innerHTML = `<div class="card" style="max-width:760px;margin:6vh auto 0"><div class="empty" style="padding:56px 32px">
+      <div style="width:64px;height:64px;border-radius:18px;background:var(--soft);display:grid;place-items:center;margin-bottom:16px">${ico("folder").replace("<svg", '<svg style="width:30px;height:30px;color:var(--brand);margin:0"')}</div>
+      <b style="font-size:18px">Dự án chưa có bản vẽ</b>
+      <span style="max-width:460px;line-height:1.6;margin-top:6px">Thêm bộ bản vẽ CAD (.dwg) của dự án. Nên chọn cả thư mục để phần mềm lấy luôn thư mục <b>Xref</b> đi kèm.</span>
+      <div class="row" style="margin-top:22px"><button class="btn primary lg" id="eFolder">${ico("folder")} Chọn thư mục bản vẽ</button><button class="btn lg" id="eFiles">${ico("file")} Chọn file DWG</button></div>
+    </div></div>`;
+  $("#eFolder").onclick = () => openDrawingDialog({ kind: "replace", pick: "folder" });
+  $("#eFiles").onclick = () => openDrawingDialog({ kind: "replace", pick: "files" });
+}
+
 function renderWorkspace() {
   const p = S.prj;
+  if (!p.files || !p.files.some((f) => f.role === "main")) return renderEmptyProject();
   const unk = p.symbols.filter((s) => s.count > 0 && !s.map).length;
-  setTop(`<div style="min-width:0"><h1>${esc(p.name)}</h1></div>
+  setTop(`${crumbs(p.name)}
     <span class="crumb">${p.files.filter((f) => f.role === "main").length} bản vẽ · ${p.pages.length} trang${p.process_seconds ? ` · xử lý ${fmt(p.process_seconds)} giây` : ""}</span>
     <div class="grow"></div>
     <button class="btn" id="tRen">${ico("edit")} Đổi tên</button>
+    <button class="btn" id="tDraw">${ico("folder")} Cập nhật bản vẽ</button>
     <button class="btn primary" id="tExp">${ico("download")} Xuất Excel</button>`);
+  bindCrumbs();
   $("#tExp").onclick = exportExcel;
+  $("#tDraw").onclick = () => openDrawingDialog({ kind: "replace" });
   $("#tRen").onclick = async () => {
     const n = prompt("Tên dự án", p.name);
     if (n && n.trim()) { p.name = await call("rename_project", S.pid, n.trim()); renderWorkspace(); }
@@ -331,8 +393,8 @@ function renderWorkspace() {
     ["symbols", "2", "Ký hiệu & vật tư", unk ? `${unk} ký hiệu chưa xác định` : "Đã xác định đủ"],
     ["results", "3", "Kết quả", "Bảng khối lượng"],
   ];
-  v.innerHTML = `<div class="ws-head"><div class="tabs">${tabs.map(([k, n, l, s]) => `<div class="tab ${S.tab === k ? "on" : ""}" data-t="${k}"><div class="tn">${n}</div><div>${l}<small>${s}</small></div></div>`).join("")}</div></div><div class="ws-body" id="wsBody"></div>`;
-  $$(".tab", v).forEach((t) => (t.onclick = () => { S.tab = t.dataset.t; renderNav(); renderWorkspace(); }));
+  v.innerHTML = `<div class="ws-head"><span class="ws-label">${ico("layers")}Các bước của dự án</span><div class="tabs">${tabs.map(([k, n, l, s]) => `<div class="tab ${S.tab === k ? "on" : ""}" data-t="${k}"><div class="tn">${n}</div><div>${l}<small>${s}</small></div></div>`).join("")}</div></div><div class="ws-body" id="wsBody"></div>`;
+  $$(".tab", v).forEach((t) => (t.onclick = () => { S.tab = t.dataset.t; renderWorkspace(); }));
   if (S.tab === "pages") renderPagesTab();
   else if (S.tab === "symbols") renderSymbolsTab();
   else renderResultsTab();
@@ -582,7 +644,7 @@ function renderSymbolsTab() {
     </div>
     <div id="sBody"></div></div>`;
   $$("#sV button").forEach((b) => (b.onclick = () => { S.sView = b.dataset.v; renderSymbolsTab(); }));
-  $("#sAcc").onclick = async () => { const k = await call("accept_suggestions", S.pid); await refreshCounts(); toast(`Đã xác nhận ${k} gợi ý và lưu vào thư viện`); renderSymbolsTab(); renderNav(); };
+  $("#sAcc").onclick = async () => { const k = await call("accept_suggestions", S.pid); await refreshCounts(); toast(`Đã xác nhận ${k} gợi ý và lưu vào thư viện`); renderSymbolsTab(); };
   if (S.sView === "layers") return renderLayers();
   $("#sBody").innerHTML = `
     <div class="toolbar">
