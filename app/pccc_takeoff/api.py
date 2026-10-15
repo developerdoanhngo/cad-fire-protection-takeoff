@@ -44,6 +44,7 @@ class Api:
     # ------------------------------------------------------------ chung
     def app_info(self):
         return {"name": APP_NAME, "version": __version__, "catalog": CAT.catalog_list(),
+                "rules": len(CAT.RULES),
                 "systems": [{"code": c, "name": n} for c, n in CAT.SYSTEMS]}
 
     def list_projects(self):
@@ -300,8 +301,24 @@ class Api:
     # ------------------------------------------------------------ thư viện ký hiệu
     def library(self):
         lib = L.load()
+        # dự án còn ký hiệu "Gợi ý" / "Chưa xác định" -> gợi ý người dùng vào xác nhận
+        pending = []
+        for meta in P.list_projects():
+            if meta.get("status") != "ready":
+                continue
+            try:
+                prj = self._prj(meta["id"])
+            except Exception:
+                continue
+            counts = P.symbol_counts(prj)["included"]
+            sug = sum(1 for k, s in prj["symbols"].items() if s.get("source") == "suggest" and counts.get(k, 0) > 0)
+            unk = sum(1 for k, s in prj["symbols"].items() if not s.get("map") and counts.get(k, 0) > 0)
+            if sug or unk:
+                pending.append({"id": meta["id"], "name": meta["name"], "suggest": sug, "unknown": unk,
+                                "updated": meta.get("updated")})
         return {"symbols": [{"key": k} | v for k, v in sorted(lib["symbols"].items())],
-                "layers": [{"key": k} | v for k, v in sorted(lib["layers"].items())]}
+                "layers": [{"key": k} | v for k, v in sorted(lib["layers"].items())],
+                "pending": pending}
 
     def library_remove(self, kind, key):
         L.remember(kind, key, None)

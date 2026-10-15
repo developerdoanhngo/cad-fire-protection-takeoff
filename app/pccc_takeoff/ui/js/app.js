@@ -1,6 +1,6 @@
 /* DCS PCCC Takeoff – giao diện */
 "use strict";
-const UI_VERSION = "1.0.3"; // build.py tự đồng bộ với __version__
+const UI_VERSION = "1.0.4"; // build.py tự đồng bộ với __version__
 
 /* ------------------------------------------------------------------ icons */
 const IC = {
@@ -554,8 +554,10 @@ async function drawPageView() {
   if (!g) {
     try { g = await API.page_geometry(S.pid, pg.id); S.geomCache.set(pg.id, g); } catch (e) { $("#vLoad").textContent = "Không tải được hình trang"; return; }
   }
-  if (S.selPage !== pg.id) return;
-  $("#vLoad").remove();
+  // người dùng có thể đã chuyển trang / chuyển tab trong lúc đang tải
+  if (S.selPage !== pg.id || !document.body.contains(canvas)) return;
+  const vl = $("#vLoad");
+  if (vl) vl.remove();
   viewer.set(g);
 }
 
@@ -808,15 +810,51 @@ async function exportExcel() {
 
 /* ------------------------------------------------------------------ library */
 async function renderLibrary() {
-  setTop(`<h1>Thư viện ký hiệu</h1><span class="crumb">· Những ký hiệu đã xác nhận được nhớ cho các dự án sau</span>`);
+  setTop(`<h1>Thư viện ký hiệu</h1><span class="crumb">· Bộ nhớ dùng chung cho mọi dự án</span>`);
   const lib = await call("library");
+  const cat = S.info.catalog || [];
   const v = $("#view");
-  const tbl = (rows, kind) => rows.length ? `<table class="grid"><thead><tr><th>${kind === "symbols" ? "Ký hiệu trong bản vẽ" : "Lớp vẽ (layer)"}</th><th>Vật tư</th><th style="width:90px">Đơn vị</th><th style="width:80px"></th></tr></thead><tbody>${rows.map((r) => `<tr><td class="mono" style="color:var(--ink);font-weight:600">${esc(r.key)}</td><td>${r.ignore ? '<span class="state ignore">Không tính</span>' : esc(r.material)}${kind === "layers" && r.factor && r.factor != 1 ? ` <span class="chip">× ${fmt(r.factor, 2)}</span>` : ""}</td><td>${esc(r.unit || "")}</td><td><button class="btn sm danger" data-kind="${kind}" data-key="${esc(r.key)}">${ico("trash")}</button></td></tr>`).join("")}</tbody></table>` : `<div class="empty">${ico("book")}<b>Chưa có mục nào</b><span>Khi bạn xác nhận ký hiệu trong một dự án, phần mềm sẽ ghi nhớ ở đây.</span></div>`;
+  const nMem = lib.symbols.length + lib.layers.length;
+  const kpis = [
+    ["shapes", "#E7F8F1", "#059669", lib.symbols.length, "ký hiệu đã ghi nhớ"],
+    ["ruler", "#E0F2FE", "#0369A1", lib.layers.length, "lớp đo chiều dài đã ghi nhớ"],
+    ["table", "#EDF3FF", "#055FD1", cat.length, "vật tư có sẵn trong danh mục"],
+    ["spark", "#FFF6E6", "#D97706", S.info.rules || 0, "quy tắc gợi ý có sẵn"],
+  ];
+  const pend = (lib.pending || []).sort((x, y) => (y.updated || "").localeCompare(x.updated || ""));
+  const tbl = (rows, kind) => rows.length ? `<table class="grid"><thead><tr><th>${kind === "symbols" ? "Ký hiệu trong bản vẽ" : "Lớp vẽ (layer)"}</th><th>Vật tư</th><th style="width:90px">Đơn vị</th><th style="width:80px"></th></tr></thead><tbody>${rows.map((r) => `<tr><td class="mono" style="color:var(--ink);font-weight:600">${esc(r.key)}</td><td>${r.ignore ? '<span class="state ignore">Không tính</span>' : esc(r.material)}${kind === "layers" && r.factor && r.factor != 1 ? ` <span class="chip">× ${fmt(r.factor, 2)}</span>` : ""}</td><td>${esc(r.unit || "")}</td><td><button class="btn sm danger" data-kind="${kind}" data-key="${esc(r.key)}" title="Xoá khỏi thư viện">${ico("trash")}</button></td></tr>`).join("")}</tbody></table>`
+    : `<div class="empty" style="padding:28px 20px">${ico(kind === "symbols" ? "shapes" : "ruler")}<b>Chưa ghi nhớ ${kind === "symbols" ? "ký hiệu" : "lớp đo"} nào</b><span>Mục này tự đầy dần khi bạn xác nhận ở bước 2 của dự án.</span></div>`;
+  const groups = {};
+  cat.forEach((c) => { (groups[c.system] = groups[c.system] || []).push(c); });
+  const lt = S.libTab || "mem";
   v.innerHTML = `<div class="col" style="gap:18px">
-    <div class="infoline">${ico("info")}<div>Phần mềm nhớ theo <b>tên ký hiệu + chữ hiện ra</b> trong bản vẽ. Dự án mới có cùng ký hiệu sẽ được tự điền – bạn chỉ cần xác nhận những ký hiệu mới.</div></div>
-    <div class="card" style="overflow:hidden"><div class="card-h"><h3>Ký hiệu thiết bị</h3><span class="sub">${lib.symbols.length} mục</span></div>${tbl(lib.symbols, "symbols")}</div>
-    <div class="card" style="overflow:hidden"><div class="card-h"><h3>Lớp đo chiều dài</h3><span class="sub">${lib.layers.length} mục</span></div>${tbl(lib.layers, "layers")}</div></div>`;
+    <div class="kpis" style="margin:0">${kpis.map(([i, bg, fg, b, t]) => `<div class="card kpi"><div class="ki" style="background:${bg};color:${fg}">${ico(i)}</div><div><b>${fmt(b)}</b><span>${t}</span></div></div>`).join("")}</div>
+    <div class="card"><div class="card-b lib-how">
+      <div class="lh-step"><div class="n">1</div><div><b>Phần mềm gợi ý</b><span>Khi xử lý bản vẽ, mỗi ký hiệu được gợi ý là vật tư gì dựa trên ${fmt(S.info.rules || 0)} quy tắc có sẵn.</span></div></div>
+      <div class="lh-step"><div class="n">2</div><div><b>Bạn xác nhận</b><span>Ở bước 2 “Ký hiệu & vật tư” của dự án, bấm ✓ từng dòng hoặc “Xác nhận tất cả gợi ý”.</span></div></div>
+      <div class="lh-step"><div class="n">3</div><div><b>Phần mềm ghi nhớ</b><span>Ký hiệu đã xác nhận được lưu ở đây. Dự án sau gặp lại sẽ tự điền, không phải xác nhận lại.</span></div></div>
+    </div></div>
+    ${!nMem && pend.length ? `<div class="card lib-cta"><div class="card-b row" style="gap:16px">
+      <div class="ki" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--warn-soft);color:#D97706;flex:none">${ico("spark")}</div>
+      <div class="grow"><b style="color:var(--ink);font-size:15px">Thư viện đang trống – có ${fmt(pend[0].suggest)} ký hiệu đang chờ bạn xác nhận</b>
+        <div class="muted" style="margin-top:3px">Dự án “${esc(pend[0].name)}” có ${fmt(pend[0].suggest)} ký hiệu ở trạng thái <b>Gợi ý</b>${pend[0].unknown ? ` và ${fmt(pend[0].unknown)} ký hiệu chưa xác định` : ""}. Xác nhận một lần là thư viện ghi nhớ cho mọi dự án sau.</div></div>
+      <button class="btn primary" id="libGo">${ico("arrow")} Mở để xác nhận</button></div></div>` : ""}
+    <div class="seg" id="libT"><button data-t="mem" class="${lt === "mem" ? "on" : ""}">Đã ghi nhớ<span class="n">${nMem}</span></button><button data-t="cat" class="${lt === "cat" ? "on" : ""}">Danh mục vật tư có sẵn<span class="n">${cat.length}</span></button></div>
+    ${lt === "mem" ? `
+      <div class="card" style="overflow:hidden"><div class="card-h"><h3>Ký hiệu thiết bị</h3><span class="sub">${lib.symbols.length} mục</span></div>${tbl(lib.symbols, "symbols")}</div>
+      <div class="card" style="overflow:hidden"><div class="card-h"><h3>Lớp đo chiều dài</h3><span class="sub">${lib.layers.length} mục</span></div>${tbl(lib.layers, "layers")}</div>`
+    : `<div class="card"><div class="card-h"><h3>Danh mục vật tư có sẵn</h3><span class="sub">Gợi ý trong ô “Là vật tư gì?”. Bạn vẫn gõ được tên khác nếu cần.</span></div><div class="card-b col" style="gap:18px">
+      ${Object.entries(groups).map(([sys, items]) => `<div><div class="row" style="gap:8px;margin-bottom:8px">${sysChip(sys)}<span class="muted" style="font-size:12.5px">${items.length} vật tư</span></div>
+        <div class="catgrid">${items.map((c) => `<div class="catitem"><span>${esc(c.name)}</span><span class="muted">${esc(c.unit)}</span></div>`).join("")}</div></div>`).join("")}
+    </div></div>`}
+  </div>`;
+  $$("#libT button", v).forEach((b) => (b.onclick = () => { S.libTab = b.dataset.t; renderLibrary(); }));
   $$("[data-kind]", v).forEach((b) => (b.onclick = async () => { await call("library_remove", b.dataset.kind, b.dataset.key); toast("Đã xoá khỏi thư viện"); renderLibrary(); }));
+  const go = $("#libGo", v);
+  if (go) go.onclick = async () => {
+    await openProject(pend[0].id);
+    if (S.view === "ws") { S.tab = "symbols"; S.sView = "symbols"; S.sFilter = "suggest"; renderWorkspace(); }
+  };
 }
 
 /* ------------------------------------------------------------------ about */

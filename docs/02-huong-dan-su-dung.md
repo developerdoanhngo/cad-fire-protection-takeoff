@@ -1,9 +1,9 @@
-# Hướng dẫn sử dụng DCS PCCC Takeoff (phiên bản 1.0.3)
+# Hướng dẫn sử dụng DCS PCCC Takeoff (phiên bản 1.0.4)
 
 Phần mềm desktop đọc bộ bản vẽ CAD (DWG) của hệ thống phòng cháy chữa cháy, tự đếm thiết bị, đo chiều dài ống và dây, rồi xuất bảng khối lượng ra Excel.
 
 ## 1. Cài đặt và mở phần mềm
-- Chép thư mục `DCS PCCC Takeoff` (hoặc giải nén file `DCS-PCCC-Takeoff-1.0.3-win64.zip`) vào máy.
+- Chép thư mục `DCS PCCC Takeoff` (hoặc giải nén file `DCS-PCCC-Takeoff-1.0.4-win64.zip`) vào máy.
 - Chạy file **`DCS PCCC Takeoff.exe`**.
 - Yêu cầu máy: Windows 10/11 có Microsoft Edge WebView2. Các máy Windows 10/11 được cập nhật đều có sẵn thành phần này.
 - Không cần cài AutoCAD. Bản vẽ được xử lý ngay trên máy, không gửi đi đâu.
@@ -58,6 +58,11 @@ Phần mềm desktop đọc bộ bản vẽ CAD (DWG) của hệ thống phòng 
 - **Đường ống & dây (đo dài)**: gán mỗi lớp vẽ (layer) là loại ống / dây gì.
   - Ví dụ lớp `DN50` là ống thép DN50.
   - Ống gió vẽ bằng 2 nét viền thì để hệ số 0,5.
+
+**Màn hình Thư viện ký hiệu** (menu trái) là bộ nhớ dùng chung cho mọi dự án:
+- **Đã ghi nhớ:** các ký hiệu và lớp đo bạn đã xác nhận. Xoá được nếu ghi nhớ nhầm.
+- **Danh mục vật tư có sẵn:** các tên vật tư mà phần mềm gợi ý.
+- Thư viện **trống cho đến khi bạn xác nhận** ký hiệu đầu tiên. Khi còn trống, màn hình hiện nút **Mở để xác nhận**, đưa thẳng tới các ký hiệu đang chờ của dự án gần nhất.
 
 ## 6. Bước 3: Kết quả & xuất Excel
 - Bảng **Tổng hợp** chia theo Hệ → Tòa nhà → Hạng mục. "Đếm" nghĩa là phần mềm đếm ký hiệu, "Đo" nghĩa là phần mềm đo chiều dài.

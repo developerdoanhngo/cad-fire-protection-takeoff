@@ -1,4 +1,4 @@
 """DCS PCCC Takeoff – bóc tách khối lượng PCCC từ bản vẽ CAD."""
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 APP_NAME = "DCS PCCC Takeoff"

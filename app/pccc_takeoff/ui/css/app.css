@@ -344,3 +344,14 @@ body.in-project .topbar{height:76px;border-bottom:1px solid var(--line-2)}
 .tab:not(:last-child):after{content:none}
 .tab{padding:0 4px}
 .step-sep{width:44px;height:2px;border-radius:2px;background:#E2E8F0;align-self:center;margin:0 16px;flex:none}
+
+/* màn hình thư viện */
+.lib-how{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.lh-step{display:flex;gap:12px;align-items:flex-start}
+.lh-step .n{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-weight:700;color:#fff;background:var(--grad)}
+.lh-step b{display:block;color:var(--ink);margin-bottom:2px}
+.lh-step span{font-size:13px;color:var(--muted);line-height:1.5}
+.lib-cta{border:1px solid #FDE7B8;background:linear-gradient(90deg,#FFFBF2,#fff)}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px 16px}
+.catitem{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;background:#F8FAFC;font-size:13px}
+#libT{align-self:flex-start}
